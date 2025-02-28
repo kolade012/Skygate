@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Skygate</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="menu_profile">Profile</string>
+    <string name="menu_all_entries">View All Entries</string>
+    <string name="menu_change_password">Change Password</string>
+    <string name="menu_logout">Logout</string>
+    <string name="create_entry">Create Entry</string>
+    <string name="view_stock">View Stock</string>
+    <string name="view_entries">View Entries</string>
+    <string name="current_filter">Showing entries for: %1$s</string>
+</resources>

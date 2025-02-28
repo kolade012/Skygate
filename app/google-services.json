@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "117603943737",
+    "project_id": "skygate-5f30a",
+    "storage_bucket": "skygate-5f30a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:117603943737:android:a93b5584af91fb814b54e8",
+        "android_client_info": {
+          "package_name": "com.example.skygate"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDkZlZM-shsk2XjBG28P6XxB2sb6rjnM60"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
