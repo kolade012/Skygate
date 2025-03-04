@@ -31,6 +31,7 @@ import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -196,12 +197,25 @@ public class AdminDashboardActivity extends AppCompatActivity
     }
 
     private void processEmptiesMetrics(QuerySnapshot snapshots) {
-        int emptiesAvailable = 0;
-        for (QueryDocumentSnapshot doc : snapshots) {
-            emptiesAvailable++;
+        if (snapshots != null && !snapshots.isEmpty()) {
+            // Assuming there's only one document in the empties collection
+            DocumentSnapshot doc = snapshots.getDocuments().get(0);
+
+            if (doc.exists()) {
+                Long emptiesAvailable = doc.getLong("quantity"); // Retrieve the quantity field
+
+                if (emptiesAvailable != null) {
+                    // Update UI with the quantity
+                    emptiesText.setText(String.valueOf(emptiesAvailable));
+                } else {
+                    emptiesText.setText("0"); // Handle case where quantity is null
+                }
+            } else {
+                emptiesText.setText("0"); // Handle case where document doesn't exist
+            }
+        } else {
+            emptiesText.setText("0"); // Handle case where snapshots are empty
         }
-        // Update UI with today's completed orders count
-        emptiesText.setText(String.valueOf(emptiesAvailable));
     }
 
     private void updateSalesMetrics() {
