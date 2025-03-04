@@ -37,6 +37,7 @@ import com.google.firebase.firestore.WriteBatch;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -86,6 +87,7 @@ public class CreateEntryActivity extends AppCompatActivity {
         put("shop_sales", "Shop Sales");
         put("director", "Director");
         put("oke", "Oke");
+        put("emma", "Emma");
     }};
 
     @Override
@@ -738,6 +740,10 @@ public class CreateEntryActivity extends AppCompatActivity {
             List<Map<String, Object>> products = new ArrayList<>();
             double totalSaleAmount = 0;
 
+            // Track totals for empties update
+            int totalSoldForEmpties = 0;
+            int totalSuppliedForEmpties = 0;
+
             for (int i = 1; i < productsTable.getChildCount(); i++) {
                 TableRow row = (TableRow) productsTable.getChildAt(i);
                 String product = ((Spinner) row.getChildAt(1)).getSelectedItem().toString();
@@ -772,6 +778,16 @@ public class CreateEntryActivity extends AppCompatActivity {
                     saleData.put("driverId", driverId);
                     DocumentReference salesRef = db.collection("sales").document();
                     batch.set(salesRef, saleData);
+
+                    // Check for products to update empties
+                    if (product.equals("50CL") || product.equals("35CL M.D") || product.equals("35CL 7UP") || product.equals("30CL")) {
+                        totalSoldForEmpties += sold;
+                    }
+                } else if (entryType.equals("Supply")) {
+                    // Check for products to update empties
+                    if (product.equals("50CL") || product.equals("35CL M.D") || product.equals("35CL 7UP") || product.equals("30CL")) {
+                        totalSuppliedForEmpties += in;
+                    }
                 }
                 products.add(productData);
 
@@ -796,6 +812,11 @@ public class CreateEntryActivity extends AppCompatActivity {
                 batch.set(orderRef, orderData);
             }
 
+            // Update empties if needed
+            if (totalSoldForEmpties > 0 || totalSuppliedForEmpties > 0) {
+                updateEmpties(batch, totalSoldForEmpties, totalSuppliedForEmpties, entryType);
+            }
+
             // Commit the batch
             batch.commit()
                     .addOnSuccessListener(aVoid -> {
@@ -814,6 +835,40 @@ public class CreateEntryActivity extends AppCompatActivity {
             setLoading(false);
             showErrorDialog("Save Error", "Failed to prepare entry data. Please try again.");
         }
+    }
+
+    private void updateEmpties(WriteBatch batch, int sold, int supplied, String entryType) {
+        DocumentReference emptiesRef = db.collection("empties").document("01B0qt3S9pg7dLslufLn"); // Assuming you have a fixed ID for the empties document
+
+        db.runTransaction(transaction -> {
+            DocumentSnapshot emptiesSnapshot = transaction.get(emptiesRef);
+            if (emptiesSnapshot.exists()) {
+                Long currentQuantity = emptiesSnapshot.getLong("quantity");
+                if (currentQuantity == null) {
+                    currentQuantity = 0L;
+                }
+
+                long newQuantity;
+                if (entryType.equals("Sales")) {
+                    newQuantity = currentQuantity + sold;
+                } else { // Supply
+                    newQuantity = currentQuantity - supplied;
+                    if (newQuantity < 0) {
+                        newQuantity = 0; // Prevent negative quantities
+                    }
+                }
+                transaction.update(emptiesRef, "quantity", newQuantity);
+            } else {
+                // If empties document doesn't exist, create it with sold quantity for sales
+                if (entryType.equals("Sales")) {
+                    transaction.set(emptiesRef, Collections.singletonMap("quantity", (long) sold));
+                } else {
+                    // If supply and empties document doesn't exist, start with 0
+                    transaction.set(emptiesRef, Collections.singletonMap("quantity", 0L));
+                }
+            }
+            return null;
+        });
     }
 
     private void showSuccessAndFinish() {

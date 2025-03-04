@@ -55,13 +55,14 @@ public class AdminDashboardActivity extends AppCompatActivity
     private static final String COLLECTION_SALES = "sales";
     private static final String COLLECTION_INVENTORY = "inventory";
     private static final String COLLECTION_STAFF = "staff";
+    private static final String COLLECTION_EMPTIES = "empties";
 
     private DrawerLayout drawerLayout;
     private LineChart salesChart;
     private BarChart inventoryChart;
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
-    private TextView totalSalesText, inventoryValueText, ordersText, staffText, topPerformerText, totalSalesAmountText, averageSalesText;
+    private TextView totalSalesText, inventoryValueText, ordersText, staffText, emptiesText, topPerformerText, totalSalesAmountText, averageSalesText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,6 +88,7 @@ public class AdminDashboardActivity extends AppCompatActivity
         staffText = findViewById(R.id.text_staff);
         salesChart = findViewById(R.id.sales_chart);
         inventoryChart = findViewById(R.id.inventory_chart);
+        emptiesText = findViewById(R.id.text_empties);
 //        topPerformerText = findViewById(R.id.text_top_performer);
 //        totalSalesAmountText = findViewById(R.id.text_total_sales_amount);
 //        averageSalesText = findViewById(R.id.text_average_sales);
@@ -174,6 +176,32 @@ public class AdminDashboardActivity extends AppCompatActivity
         updateInventoryMetrics();
         updateOrderMetrics();
         updateStaffMetrics();
+        updateEmptiesMetrics();
+    }
+
+    private void updateEmptiesMetrics() {
+        // Set up real-time listener for empties
+        db.collection("empties")
+                .addSnapshotListener((snapshots, e) -> {
+                    if (e != null) {
+                        showError("Failed to listen for order updates: " + e.getMessage());
+                        return;
+                    }
+
+                    if (snapshots != null) {
+                        processEmptiesMetrics(snapshots);
+                    }
+                });
+
+    }
+
+    private void processEmptiesMetrics(QuerySnapshot snapshots) {
+        int emptiesAvailable = 0;
+        for (QueryDocumentSnapshot doc : snapshots) {
+            emptiesAvailable++;
+        }
+        // Update UI with today's completed orders count
+        emptiesText.setText(String.valueOf(emptiesAvailable));
     }
 
     private void updateSalesMetrics() {
